@@ -3,60 +3,60 @@ import json
 import requests
 from dotenv import load_dotenv
 
-# 1. Inicialización y Configuración de Seguridad
+# 1. Configuración de Seguridad: Cargar variables de entorno
 load_dotenv()
 API_URL = os.getenv("API_URL")
-API_KEY = os.getenv("API_KEY") # Listo para usar en headers si tu API lo requiere
+API_KEY = os.getenv("API_KEY") # Listo para usarse si la API lo requiere
 
-def main():
+def extract_and_transform():
     if not API_URL:
-        print("❌ Error: API_URL no está configurada en el archivo .env")
+        print("Error: API_URL no configurada en el archivo .env")
         return
 
-    print(f"🚀 Iniciando extracción desde: {API_URL}...")
-
-    # 2. Extracción (Petición GET con control de errores)
+    print(f"Iniciando petición GET a: {API_URL}...")
+    
     try:
-        # En APIs con llave usarías: headers={"Authorization": f"Bearer {API_KEY}"}
+        # 2. Extracción: Realizar la petición HTTP
         response = requests.get(API_URL, timeout=10)
         
-        # Lanza una excepción si el código de estado es un error (404, 500, etc.)
+        # Manejo de códigos de error HTTP (404, 500, etc.)
         response.raise_for_status() 
         
-        raw_data = response.json()
-        print("✅ Datos extraídos correctamente.")
+        data = response.json()
+        print(head="✓ Extracción exitosa.")
 
-    except requests.exceptions.HTTPError as http_err:
-        print(f"❌ Error HTTP ocurrido: {http_err}")
-        return
-    except requests.exceptions.RequestException as err:
-        print(f"❌ Error de conexión: {err}")
-        return
-    except ValueError:
-        print("❌ Error: La respuesta de la API no contiene un JSON válido.")
-        return
+        # 3. Transformación Básica: Limpieza de campos innecesarios
+        # De cada usuario, solo conservaremos: id, name, username, email y company_name
+        cleaned_data = []
+        for user in data:
+            clean_user = {
+                "id": user.get("id"),
+                "name": user.get("name"),
+                "username": user.get("username"),
+                "email": user.get("email"),
+                "company_name": user.get("company", {}).get("name") # Campo anidado
+            }
+            cleaned_data.append(clean_user)
+            
+        print("✓ Transformación completada (Campos innecesarios eliminados).")
 
-    # 3. Transformación Básica
-    # Filtramos la estructura para conservar solo id, nombre y email de los usuarios
-    cleaned_data = []
-    for item in raw_data:
-        cleaned_item = {
-            "id": item.get("id"),
-            "name": item.get("name"),
-            "email": item.get("email")
-        }
-        cleaned_data.append(cleaned_item)
-    
-    print(f"🧹 Transformación completada. Registros procesados: {len(cleaned_data)}")
-
-    # 4. Persistencia
-    output_filename = "data_extracted.json"
-    try:
+        # 4. Persistencia: Guardar en data_extracted.json
+        output_filename = "data_extracted.json"
         with open(output_filename, "w", encoding="utf-8") as f:
             json.dump(cleaned_data, f, indent=4, ensure_ascii=False)
-        print(f"💾 Datos guardados exitosamente en '{output_filename}'.")
-    except IOError as e:
-        print(f"❌ Error al guardar el archivo: {e}")
+            
+        print(f"✓ Persistencia completada. Archivo guardado como: '{output_filename}'")
 
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Error HTTP ocurrido: {http_err}")
+    except requests.exceptions.ConnectionError as conn_err:
+        print(f"Error de conexión: {conn_err}")
+    except requests.exceptions.Timeout:
+        print("La petición ha superado el tiempo de espera límite.")
+    except Exception as err:
+        print(f"Ocurrió un error inesperado: {err}")
+
+# Ejecutar el script
 if __name__ == "__main__":
-    main()
+    extract_and_transform()
+
