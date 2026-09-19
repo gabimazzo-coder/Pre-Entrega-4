@@ -1,0 +1,14 @@
+# Entorno virtual
+venv/
+.venv/
+
+# Variables de entorno con credenciales sensibles
+.env
+
+# Cache de Python
+__pycache__/
+*.pyc
+
+# Archivos de datos generados localmente
+data_extracted.json
+data_extracted.csv
