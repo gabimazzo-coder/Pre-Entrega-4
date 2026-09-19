@@ -23,7 +23,7 @@ def extract_and_transform():
         response.raise_for_status() 
         
         data = response.json()
-        print(head="✓ Extracción exitosa.")
+        print("✓ Extracción exitosa.")
 
         # 3. Transformación Básica: Limpieza de campos innecesarios
         # De cada usuario, solo conservaremos: id, name, username, email y company_name
